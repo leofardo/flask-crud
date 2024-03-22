@@ -1,4 +1,4 @@
-from flask import render_template, request, redirect, session, flash, url_for
+from flask import render_template, request, redirect, session, flash, url_for, send_from_directory
 from jogoteca import app, db
 from models import Jogos, Usuarios
 
@@ -22,7 +22,7 @@ def criar():
     console = request.form['console']
 
     jogo = Jogos.query.filter_by(nome=nome).first()
-
+    print(jogo)
     if jogo:
         flash('Jogo Já existente.')
         return redirect(url_for('novo'))
@@ -31,6 +31,14 @@ def criar():
     novo_jogo = Jogos(nome=nome, categoria=categoria, console=console)
     db.session.add(novo_jogo)
     db.session.commit()
+
+    #salvando o arquivo
+    arquivo = request.files['arquivo']
+
+    #buscando o diretorio na aba config
+    upload_path = app.config['UPLOAD_PATH']
+    arquivo.save(f'{upload_path}/capa{novo_jogo.id}.png')
+
 
     return redirect(url_for('index'))
 
@@ -98,3 +106,8 @@ def deletar(id):
     flash('Jogo deletado com sucesso')
 
     return redirect(url_for('index'))
+
+@app.route('/uploads/<nome_arquivo>')
+def imagem(nome_arquivo):
+    return send_from_directory('uploads', nome_arquivo)
+
