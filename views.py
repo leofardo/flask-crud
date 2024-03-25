@@ -58,23 +58,35 @@ def editar(id):
         return redirect(url_for('login', proxima=url_for('editar', id=id)))
 
     jogo = Jogos.query.filter_by(id=id).first()
+
+    form = FormularioJogo()
+    form.nome.data = jogo.nome #acessando o valor do input nome (como se tivese colocando o atributo values no html)
+    form.categoria.data = jogo.categoria
+    form.console.data = jogo.console
+
     capa_jogo = recupera_imagem(id)
 
-    return render_template('editar.html', titulo='Editando Jogo', jogo=jogo, capa_jogo=capa_jogo)
+    return render_template('editar.html', titulo='Editando Jogo', id=id, capa_jogo=capa_jogo, form=form)
 
 @app.route('/login')
 def login():
     proxima = request.args.get('proxima')
-    return render_template('login.html', proxima=proxima)
+
+    form = FormularioUsuario()
+
+    return render_template('login.html', proxima=proxima, form=form)
 
 @app.route('/autenticar', methods=['POST',])
 
 def autenticar():
+
+    form = FormularioUsuario(request.form)
+
     #fazendo o select com o ORM SQLALCHEMY
-    usuario = Usuarios.query.filter_by(nickname=request.form['usuario']).first()
+    usuario = Usuarios.query.filter_by(nickname=form.nickname.data).first()
 
     if usuario: #se achar
-        if request.form['senha'] == usuario.senha:
+        if form.senha.data == usuario.senha:
             session['usuario_logado'] = usuario.nickname
             flash(usuario.nickname + ' logado com sucesso!')
             proxima_pagina = request.form['proxima']
@@ -94,29 +106,31 @@ def logout():
 
 @app.route('/atualizar', methods=['POST',])
 def atualizar():
-    jogo = Jogos.query.filter_by(id=request.form['id']).first()
+    form = FormularioJogo(request.form)
 
-    jogo.nome = request.form['nome']
-    jogo.categoria = request.form['categoria']
-    jogo.console = request.form['console']
+    if form.validate_on_submit():
+        jogo = Jogos.query.filter_by(id=request.form['id']).first()
 
-    #mesma sintaxe de criar, mas aqui vai atualizar
-    db.session.add(jogo)
-    db.session.commit()
+        jogo.nome = form.nome.data
+        jogo.categoria = form.categoria.data
+        jogo.console = form.console.data
 
-    # salvando o arquivo
-    arquivo = request.files['arquivo']
+        #mesma sintaxe de criar, mas aqui vai atualizar
+        db.session.add(jogo)
+        db.session.commit()
 
-    # buscando o diretorio na aba config
-    upload_path = app.config['UPLOAD_PATH']
+        # salvando o arquivo
+        arquivo = request.files['arquivo']
 
-    #ajuste no cache
-    timestamp = time.time()
-    deleta_arquivo(jogo.id)
-    arquivo.save(f'{upload_path}/capa{jogo.id}-{timestamp}.png')
+        # buscando o diretorio na aba config
+        upload_path = app.config['UPLOAD_PATH']
+
+        #ajuste no cache
+        timestamp = time.time()
+        deleta_arquivo(jogo.id)
+        arquivo.save(f'{upload_path}/capa{jogo.id}-{timestamp}.png')
 
     return redirect(url_for('index'))
-
 
 @app.route('/deletar/<int:id>')
 def deletar(id):

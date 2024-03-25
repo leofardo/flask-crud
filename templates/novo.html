@@ -13,6 +13,7 @@
         </figure>
 
         <fieldset>
+          {{ form.csrf_token() }} <!-- garantindo a segurança do formulario, sem isso os dados nao atualizam -->
           <div class="form-group">
             {{ form.nome.label(class="form-label") }}
             {{ form.nome(class="form-control") }}
