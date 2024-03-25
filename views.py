@@ -14,14 +14,20 @@ def index():
 def novo():
     if 'usuario_logado' not in session or session['usuario_logado'] == None:
         return redirect(url_for('login', proxima=url_for('novo')))
-    return render_template('novo.html', titulo='Novo Jogo')
+
+    form = FormularioJogo()
+    return render_template('novo.html', titulo='Novo Jogo', form=form)
 
 @app.route('/criar', methods=['POST',])
 def criar():
+    form = FormularioJogo(request.form)
 
-    nome = request.form['nome']
-    categoria = request.form['categoria']
-    console = request.form['console']
+    if not form.validate_on_submit():
+        return redirect(url_for('novo'))
+
+    nome = form.nome.data
+    categoria = form.categoria.data
+    console = form.console.data
 
     jogo = Jogos.query.filter_by(nome=nome).first()
     print(jogo)
