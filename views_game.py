@@ -1,7 +1,7 @@
 from flask import render_template, request, redirect, session, flash, url_for, send_from_directory
 from jogoteca import app, db
-from models import Jogos, Usuarios
-from helpers import *
+from models import Jogos
+from helpers import recupera_imagem, deleta_arquivo, FormularioJogo
 import time
 
 @app.route('/')
@@ -67,42 +67,6 @@ def editar(id):
     capa_jogo = recupera_imagem(id)
 
     return render_template('editar.html', titulo='Editando Jogo', id=id, capa_jogo=capa_jogo, form=form)
-
-@app.route('/login')
-def login():
-    proxima = request.args.get('proxima')
-
-    form = FormularioUsuario()
-
-    return render_template('login.html', proxima=proxima, form=form)
-
-@app.route('/autenticar', methods=['POST',])
-
-def autenticar():
-
-    form = FormularioUsuario(request.form)
-
-    #fazendo o select com o ORM SQLALCHEMY
-    usuario = Usuarios.query.filter_by(nickname=form.nickname.data).first()
-
-    if usuario: #se achar
-        if form.senha.data == usuario.senha:
-            session['usuario_logado'] = usuario.nickname
-            flash(usuario.nickname + ' logado com sucesso!')
-            proxima_pagina = request.form['proxima']
-            return redirect(proxima_pagina)
-        else:
-            flash('Senha incorreta.')
-            return redirect(url_for('login'))
-    else:
-        flash('Usuário não logado.')
-        return redirect(url_for('login'))
-
-@app.route('/logout')
-def logout():
-    session['usuario_logado'] = None
-    flash('Logout efetuado com sucesso!')
-    return redirect(url_for('index'))
 
 @app.route('/atualizar', methods=['POST',])
 def atualizar():
